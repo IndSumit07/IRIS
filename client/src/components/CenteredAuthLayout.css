@@ -1,0 +1,56 @@
+/* Centered Auth Layout Styles */
+.centered-auth-layout {
+  min-height: 100vh;
+  background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2532&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+.centered-auth-layout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: inherit;
+  background-size: inherit;
+  background-position: inherit;
+  background-attachment: inherit;
+  filter: blur(6px);
+  z-index: 0;
+}
+
+.centered-auth-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 450px;
+  overflow: visible;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .centered-auth-layout {
+    background-attachment: scroll;
+    padding: 1rem;
+  }
+  
+  .centered-auth-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .centered-auth-layout {
+    padding: 0.5rem;
+  }
+}
