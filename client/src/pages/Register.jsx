@@ -1,54 +1,77 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Leaf } from 'lucide-react';
-import { authAPI } from '../utils/api';
-import CenteredAuthLayout from '../components/CenteredAuthLayout';
-import AuthFormCard from '../components/AuthFormCard';
-import '../styles/LoginPage.css';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Leaf,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
+import CenteredAuthLayout from "../components/CenteredAuthLayout";
+import AuthFormCard from "../components/AuthFormCard";
+import "../styles/LoginPage.css";
+import { useAuth } from "../contexts/AuthContext";
 
 const Register = () => {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
   });
+  const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [loadingRegister, setLoadingRegister] = useState(false);
+  const [loadingVerify, setLoadingVerify] = useState(false);
+  const [loadingResend, setLoadingResend] = useState(false);
+  const { registerUser, verifyEmail } = useAuth();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
+    const payload = {
+      fullname: {
+        firstname: formData.firstName.trim(),
+        lastname: formData.lastName.trim(),
+      },
+      email: formData.email.trim(),
+      password: formData.password,
+    };
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
+    const success = await registerUser(payload);
+    if (success) {
+      setStep(2);
     }
+  };
 
-    try {
-      const { confirmPassword, ...registerData } = formData;
-      const response = await authAPI.register(registerData);
-      setSuccess('Registration successful! Please check your email for verification.');
-      console.log('Registration successful:', response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
+  const handleVerifySubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      email: formData.email,
+      otp: otp,
+    };
+    await verifyEmail(payload);
+  };
+
+  const handleResendOtp = async () => {
+    setLoadingResend(true);
+    console.log("Resending OTP for:", formData.email);
+
+    // Simulate resend delay
+    setTimeout(() => {
+      setLoadingResend(false);
+      alert("OTP resent!");
+    }, 800);
   };
 
   return (
@@ -59,117 +82,193 @@ const Register = () => {
             <Leaf className="login-logo-icon" />
             <h2 className="login-logo-text">IRIS</h2>
           </div>
-          <p className="login-subtitle">Create your IRIS account</p>
+          <p className="login-subtitle">
+            {step === 1 ? "Create your IRIS account" : "Verify your email"}
+          </p>
         </div>
-        {error && (
-          <div className="login-error-message">
-            {error}
-          </div>
+
+        {/* Step indicator */}
+        <div
+          className="login-stepper"
+          style={{ display: "flex", gap: 8, marginBottom: 16 }}
+        >
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 9999,
+              background: step >= 1 ? "#16a34a" : "#e5e7eb",
+            }}
+          />
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 9999,
+              background: step >= 2 ? "#16a34a" : "#e5e7eb",
+            }}
+          />
+        </div>
+
+        {step === 1 && (
+          <form className="login-form" onSubmit={handleRegisterSubmit}>
+            <div className="login-form-group">
+              <label htmlFor="firstName" className="login-form-label">
+                First Name
+              </label>
+              <div className="relative">
+                <User className="login-input-icon" />
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="login-form-input"
+                  placeholder="First Name"
+                />
+              </div>
+            </div>
+
+            <div className="login-form-group">
+              <label htmlFor="lastName" className="login-form-label">
+                Last Name
+              </label>
+              <div className="relative">
+                <User className="login-input-icon" />
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="login-form-input"
+                  placeholder="Last Name"
+                />
+              </div>
+            </div>
+
+            <div className="login-form-group">
+              <label htmlFor="email" className="login-form-label">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="login-input-icon" />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="login-form-input"
+                  placeholder="Email"
+                />
+              </div>
+            </div>
+
+            <div className="login-form-group">
+              <label htmlFor="password" className="login-form-label">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="login-input-icon" />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="login-form-input"
+                  placeholder="Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="login-password-toggle"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loadingRegister}
+              className="login-submit-button"
+            >
+              {loadingRegister ? "Creating account..." : "Continue"}
+            </button>
+
+            <div className="login-form-links">
+              <Link to="/login" className="login-form-link">
+                Already have an account? Sign In
+              </Link>
+            </div>
+          </form>
         )}
 
-        {success && (
-          <div className="login-error-message" style={{background: 'rgba(34, 197, 94, 0.1)', borderColor: 'rgba(34, 197, 94, 0.3)', color: '#16a34a'}}>
-            {success}
-          </div>
+        {step === 2 && (
+          <form className="login-form" onSubmit={handleVerifySubmit}>
+            <div className="login-form-group">
+              <label htmlFor="otp" className="login-form-label">
+                Enter Verification Code
+              </label>
+              <div className="relative">
+                <ShieldCheck className="login-input-icon" />
+                <input
+                  id="otp"
+                  name="otp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="login-form-input"
+                  placeholder="6-digit code"
+                />
+              </div>
+              <div
+                className="login-form-help"
+                style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}
+              >
+                We sent the code to <strong>{formData.email}</strong>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loadingVerify}
+              className="login-submit-button"
+            >
+              {loadingVerify ? "Verifying..." : "Verify & Finish"}
+            </button>
+
+            <div
+              className="login-form-links"
+              style={{ display: "flex", justifyContent: "space-between" }}
+            >
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loadingResend}
+                className="login-form-link"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <RefreshCw size={16} />
+                {loadingResend ? "Resending..." : "Resend code"}
+              </button>
+
+              <Link to="/login" className="login-form-link">
+                Go to Sign In
+              </Link>
+            </div>
+          </form>
         )}
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="login-form-group">
-            <label htmlFor="name" className="login-form-label">Full Name</label>
-            <div className="relative">
-              <User className="login-input-icon" />
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="login-form-input"
-                placeholder="Full Name"
-              />
-            </div>
-          </div>
-
-          <div className="login-form-group">
-            <label htmlFor="email" className="login-form-label">Email Address</label>
-            <div className="relative">
-              <Mail className="login-input-icon" />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="login-form-input"
-                placeholder="Email"
-              />
-            </div>
-          </div>
-
-          <div className="login-form-group">
-            <label htmlFor="password" className="login-form-label">Password</label>
-            <div className="relative">
-              <Lock className="login-input-icon" />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="login-form-input"
-                placeholder="Password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="login-password-toggle"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="login-form-group">
-            <label htmlFor="confirmPassword" className="login-form-label">Confirm Password</label>
-            <div className="relative">
-              <Lock className="login-input-icon" />
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="login-form-input"
-                placeholder="Confirm Password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="login-password-toggle"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="login-submit-button"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-
-          <div className="login-form-links">
-            <Link to="/login" className="login-form-link">
-              Already have an account? Sign In
-            </Link>
-          </div>
-        </form>
       </AuthFormCard>
     </CenteredAuthLayout>
   );

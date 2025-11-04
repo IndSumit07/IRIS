@@ -1,42 +1,34 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Leaf } from 'lucide-react';
-import { authAPI } from '../utils/api';
-import CenteredAuthLayout from '../components/CenteredAuthLayout';
-import AuthFormCard from '../components/AuthFormCard';
-import '../styles/LoginPage.css';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock, Leaf } from "lucide-react";
+import CenteredAuthLayout from "../components/CenteredAuthLayout";
+import AuthFormCard from "../components/AuthFormCard";
+import "../styles/LoginPage.css";
+import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
+  const { loginUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
-    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+    };
 
-    try {
-      const response = await authAPI.login(formData);
-      console.log('Login successful:', response.data);
-      // Handle successful login (redirect, store token, etc.)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    await loginUser(payload);
   };
 
   return (
@@ -50,15 +42,11 @@ const Login = () => {
           <p className="login-subtitle">Login to your Dashboard</p>
         </div>
 
-        {error && (
-          <div className="login-error-message">
-            {error}
-          </div>
-        )}
-
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-form-group">
-            <label htmlFor="email" className="login-form-label">Email</label>
+            <label htmlFor="email" className="login-form-label">
+              Email
+            </label>
             <div className="relative">
               <Mail className="login-input-icon" />
               <input
@@ -75,13 +63,15 @@ const Login = () => {
           </div>
 
           <div className="login-form-group">
-            <label htmlFor="password" className="login-form-label">Password</label>
+            <label htmlFor="password" className="login-form-label">
+              Password
+            </label>
             <div className="relative">
               <Lock className="login-input-icon" />
               <input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 required
                 value={formData.password}
                 onChange={handleChange}
@@ -98,12 +88,8 @@ const Login = () => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="login-submit-button"
-          >
-            {loading ? 'Signing in...' : 'Secure Login'}
+          <button type="submit" className="login-submit-button">
+            Secure Login
           </button>
 
           <div className="login-form-links">

@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["customer", "provider"],
-      default: "customer",
+      enum: ["user", "admin"],
+      default: "user",
     },
     otp: {
       subject: { type: String },
